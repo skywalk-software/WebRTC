@@ -23,6 +23,16 @@ on:
         required: true
         default: true
         type: boolean
+      debug:
+        description: 'Build debug libraries'
+        required: true
+        default: false
+        type: boolean
+      enable_dsyms:
+        description: 'Generate dSYMs'
+        required: true
+        default: false
+        type: boolean
 jobs:
   Build-Script:
     runs-on: macos-latest
@@ -40,6 +50,8 @@ jobs:
           IOS: ${{ inputs.ios }}
           MACOS: ${{ inputs.macos }}
           MAC_CATALYST: ${{ inputs.maccatalyst }}
+          DEBUG: ${{ inputs.debug }}
+          ENABLE_DSYMS: ${{ inputs.enable_dsyms || inputs.debug }}
           BUILD_VP9: true
       - name: Upload framework
         uses: actions/upload-artifact@v4
