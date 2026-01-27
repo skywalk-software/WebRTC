@@ -8,6 +8,7 @@
 
 # Configs
 DEBUG="${DEBUG:-false}"
+ENABLE_DSYMS="${ENABLE_DSYMS:-$DEBUG}"
 BUILD_VP9="${BUILD_VP9:-false}"
 BRANCH="${BRANCH:-master}"
 IOS="${IOS:-false}"
@@ -16,7 +17,7 @@ MAC_CATALYST="${MAC_CATALYST:-false}"
 
 OUTPUT_DIR="./out"
 XCFRAMEWORK_DIR="out/WebRTC.xcframework"
-COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=false use_lld=true rtc_ios_use_opengl_rendering=true"
+COMMON_GN_ARGS="is_debug=${DEBUG} rtc_libvpx_build_vp9=${BUILD_VP9} is_component_build=false rtc_include_tests=false rtc_enable_objc_symbol_export=true enable_stripping=true enable_dsyms=${ENABLE_DSYMS} use_lld=true rtc_ios_use_opengl_rendering=true"
 PLISTBUDDY_EXEC="/usr/libexec/PlistBuddy"
 
 build_iOS() {
@@ -68,6 +69,22 @@ plist_add_architecture() {
     local index=$1
     local arch=$2
     "$PLISTBUDDY_EXEC" -c "Add :AvailableLibraries:${index}:SupportedArchitectures: string ${arch}"  "${INFO_PLIST}"
+}
+
+plist_add_debug_symbols() {
+    local index=$1
+    local path=$2
+    "$PLISTBUDDY_EXEC" -c "Add :AvailableLibraries:${index}:DebugSymbolsPath string ${path}" "${INFO_PLIST}"
+}
+
+copy_dsym_bundle() {
+    local source_dsym=$1
+    local destination_dir=$2
+    if [ ! -d "${source_dsym}" ]; then
+        echo "❌ Missing dSYM bundle: ${source_dsym}"
+        exit 1
+    fi
+    cp -R "${source_dsym}" "${destination_dir}"
 }
 
 # Step 1: Download and install depot tools
@@ -154,6 +171,17 @@ if [[ "$IOS" = true ]]; then
     # This makes it possible for Swift Packages to run Unit Tests and show SwiftUI Previews.
     xcrun codesign -s - "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC"
 
+    if [ "$ENABLE_DSYMS" = true ]; then
+        copy_dsym_bundle "out/ios-arm64-device/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+        plist_add_debug_symbols $LIB_IOS_INDEX "${IOS_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+
+        copy_dsym_bundle "out/ios-x64-simulator/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+        lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC" \
+            out/ios-x64-simulator/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC \
+            out/ios-arm64-simulator/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC
+        plist_add_debug_symbols $LIB_IOS_SIMULATOR_INDEX "${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+    fi
+
     LIB_COUNT=$((LIB_COUNT+2))
 fi
 
@@ -169,6 +197,15 @@ if [ "$MACOS" = true ]; then
 
     cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
     lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
+
+    if [ "$ENABLE_DSYMS" = true ]; then
+        copy_dsym_bundle "out/macos-x64/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+        lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC" \
+            out/macos-x64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC \
+            out/macos-arm64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC
+        plist_add_debug_symbols $LIB_COUNT "${MAC_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+    fi
+
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
@@ -184,6 +221,15 @@ if [ "$MAC_CATALYST" = true ]; then
 
     cp -RP out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
+
+    if [ "$ENABLE_DSYMS" = true ]; then
+        copy_dsym_bundle "out/catalyst-x64/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+        lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC" \
+            out/catalyst-x64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC \
+            out/catalyst-arm64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC
+        plist_add_debug_symbols $LIB_COUNT "${CATALYST_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+    fi
+
     LIB_COUNT=$((LIB_COUNT+1))
 fi
 
