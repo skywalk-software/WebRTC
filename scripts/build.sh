@@ -183,14 +183,14 @@ if [[ "$IOS" = true ]]; then
     xcrun codesign -s - "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework/WebRTC"
 
     if [ "$ENABLE_DSYMS" = true ]; then
-        copy_dsym_bundle "out/ios-arm64-device/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-        plist_add_debug_symbols $LIB_IOS_INDEX "${IOS_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+        copy_dsym_bundle "out/ios-arm64-device/WebRTC.dSYM" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+        plist_add_debug_symbols $LIB_IOS_INDEX "${IOS_LIB_IDENTIFIER}/WebRTC.dSYM"
 
-        copy_dsym_bundle "out/ios-x64-simulator/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
-        lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC" \
-            out/ios-x64-simulator/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC \
-            out/ios-arm64-simulator/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC
-        plist_add_debug_symbols $LIB_IOS_SIMULATOR_INDEX "${IOS_SIM_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+        copy_dsym_bundle "out/ios-x64-simulator/WebRTC.dSYM" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+        lipo -create -output "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC" \
+            out/ios-x64-simulator/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC \
+            out/ios-arm64-simulator/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC
+        plist_add_debug_symbols $LIB_IOS_SIMULATOR_INDEX "${IOS_SIM_LIB_IDENTIFIER}/WebRTC.dSYM"
     fi
 
     LIB_COUNT=$((LIB_COUNT+2))
@@ -210,11 +210,11 @@ if [ "$MACOS" = true ]; then
     lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
 
     if [ "$ENABLE_DSYMS" = true ]; then
-        copy_dsym_bundle "out/macos-x64/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
-        lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC" \
-            out/macos-x64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC \
-            out/macos-arm64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC
-        plist_add_debug_symbols $LIB_COUNT "${MAC_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+        copy_dsym_bundle "out/macos-x64/WebRTC.dSYM" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+        lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC" \
+            out/macos-x64/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC \
+            out/macos-arm64/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC
+        plist_add_debug_symbols $LIB_COUNT "${MAC_LIB_IDENTIFIER}/WebRTC.dSYM"
     fi
 
     LIB_COUNT=$((LIB_COUNT+1))
@@ -234,11 +234,11 @@ if [ "$MAC_CATALYST" = true ]; then
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
 
     if [ "$ENABLE_DSYMS" = true ]; then
-        copy_dsym_bundle "out/catalyst-x64/WebRTC.framework.dSYM" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
-        lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC" \
-            out/catalyst-x64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC \
-            out/catalyst-arm64/WebRTC.framework.dSYM/Contents/Resources/DWARF/WebRTC
-        plist_add_debug_symbols $LIB_COUNT "${CATALYST_LIB_IDENTIFIER}/WebRTC.framework.dSYM"
+        copy_dsym_bundle "out/catalyst-x64/WebRTC.dSYM" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+        lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC" \
+            out/catalyst-x64/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC \
+            out/catalyst-arm64/WebRTC.dSYM/Contents/Resources/DWARF/WebRTC
+        plist_add_debug_symbols $LIB_COUNT "${CATALYST_LIB_IDENTIFIER}/WebRTC.dSYM"
     fi
 
     LIB_COUNT=$((LIB_COUNT+1))
