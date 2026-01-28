@@ -87,6 +87,17 @@ copy_dsym_bundle() {
     cp -R "${source_dsym}" "${destination_dir}"
 }
 
+copy_framework_bundle() {
+    local source_framework=$1
+    local destination_dir=$2
+    if [ ! -d "${source_framework}" ]; then
+        echo "❌ Missing framework bundle: ${source_framework}"
+        exit 1
+    fi
+    # Follow symlinks so headers are real files in the XCFramework.
+    cp -RL "${source_framework}" "${destination_dir}"
+}
+
 # Step 1: Download and install depot tools
 if [ ! -d depot_tools ]; then
     git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
@@ -154,8 +165,8 @@ if [[ "$IOS" = true ]]; then
     plist_add_library $LIB_IOS_INDEX $IOS_LIB_IDENTIFIER "ios"
     plist_add_library $LIB_IOS_SIMULATOR_INDEX $IOS_SIM_LIB_IDENTIFIER "ios" "simulator"
 
-    cp -r out/ios-arm64-device/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
-    cp -r out/ios-x64-simulator/WebRTC.framework "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
+    copy_framework_bundle "out/ios-arm64-device/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_LIB_IDENTIFIER}"
+    copy_framework_bundle "out/ios-x64-simulator/WebRTC.framework" "${XCFRAMEWORK_DIR}/${IOS_SIM_LIB_IDENTIFIER}"
 
     LIPO_IOS_FLAGS="out/ios-arm64-device/WebRTC.framework/WebRTC"
     LIPO_IOS_SIM_FLAGS="out/ios-x64-simulator/WebRTC.framework/WebRTC out/ios-arm64-simulator/WebRTC.framework/WebRTC"
@@ -195,7 +206,7 @@ if [ "$MACOS" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/macos-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
+    copy_framework_bundle "out/macos-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}"
     lipo -create -output "${XCFRAMEWORK_DIR}/${MAC_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/macos-x64/WebRTC.framework/WebRTC out/macos-arm64/WebRTC.framework/WebRTC
 
     if [ "$ENABLE_DSYMS" = true ]; then
@@ -219,7 +230,7 @@ if [ "$MAC_CATALYST" = true ]; then
     plist_add_architecture $LIB_COUNT "x86_64"
     plist_add_architecture $LIB_COUNT "arm64"
 
-    cp -RP out/catalyst-x64/WebRTC.framework "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
+    copy_framework_bundle "out/catalyst-x64/WebRTC.framework" "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}"
     lipo -create -output "${XCFRAMEWORK_DIR}/${CATALYST_LIB_IDENTIFIER}/WebRTC.framework/Versions/A/WebRTC" out/catalyst-x64/WebRTC.framework/WebRTC out/catalyst-arm64/WebRTC.framework/WebRTC
 
     if [ "$ENABLE_DSYMS" = true ]; then
